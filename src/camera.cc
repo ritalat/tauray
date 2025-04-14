@@ -56,6 +56,20 @@ void camera::equirectangular(float fov_x, float fov_y)
     refresh();
 }
 
+#ifdef HYDRA_PLUGIN
+void camera::set_projection_matrix_perspective(mat4 proj)
+{
+    type = PERSPECTIVE;
+    pd.perspective = {proj, /*fixme*/ vec2(0), 90.0f, 1.0f, 0.1f, 100.0f, vec4(1,0,0,0)};
+}
+
+void camera::set_projection_matrix_ortho(mat4 proj)
+{
+    type = ORTHOGRAPHIC;
+    pd.orthographic = {proj, /*fixme*/ -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
+}
+#endif
+
 camera::projection_type camera::get_projection_type() const
 {
     return type;

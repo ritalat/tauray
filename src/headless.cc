@@ -111,6 +111,12 @@ headless::~headless()
 
 uint32_t headless::prepare_next_image(uint32_t frame_index)
 {
+#ifdef HYDRA_PLUGIN
+    if(hydra_mapping)
+        throw std::runtime_error("Attempted to render while image mapped");
+
+    hydra_converged = false;
+#endif
     device& d = get_display_device();
     d.graphics_queue.submit(
         vk::SubmitInfo(
@@ -534,6 +540,16 @@ void headless::save_image(uint32_t swapchain_index)
                 save_workers_cv.notify_one();
             });
         }
+#ifdef HYDRA_PLUGIN
+        else if(opt.output_file_type == headless::HYDRA)
+        {
+            std::lock_guard<std::mutex> lock(hydra_image_mutex);
+            hydra_image.clear();
+            hydra_image.resize(4*image_pixels);
+            memcpy(hydra_image.data(), mem, sizeof(float)*hydra_image.size());
+            hydra_converged = true;
+        }
+#endif
     }
     vmaUnmapMemory(d.allocator, id.staging_buffer.get_allocation());
 }
@@ -558,6 +574,48 @@ void headless::view_image(uint32_t swapchain_index)
 
     SDL_UpdateWindowSurface(win);
 }
+
+#ifdef HYDRA_PLUGIN
+void headless::recreate_images(uvec2 size)
+{
+    hydra_converged = false;
+    deinit_images();
+    opt.size = size;
+    hydra_image.resize(4*opt.size.x*opt.size.y);
+    init_images();
+}
+
+void* headless::map_hydra_image()
+{
+    hydra_image_mutex.lock();
+    hydra_mapping = true;
+    return (void*)hydra_image.data();
+}
+
+void headless::unmap_hydra_image()
+{
+    hydra_mapping = false;
+    hydra_image_mutex.unlock();
+}
+
+bool headless::hydra_image_mapped()
+{
+    return hydra_mapping;
+}
+
+bool headless::hydra_image_converged()
+{
+    if (accumulating)
+        return false;
+
+    return hydra_converged;
+}
+
+void headless::set_accumulating(bool acc)
+{
+    accumulating = acc;
+}
+#endif
 
 void headless::reap_workers(bool finished_only)
 {

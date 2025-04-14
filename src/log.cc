@@ -8,7 +8,7 @@ std::ostream* log_output_streams[5] = {
     &std::cout,
     &std::cerr,
     &std::cerr,
-    &std::cout,
+    &std::cerr,
     &std::cout
 };
 

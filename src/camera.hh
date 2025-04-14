@@ -24,6 +24,11 @@ public:
     void ortho(float left, float right, float bottom, float top, float near, float far);
     void equirectangular(float fov_x, float fov_y);
 
+#ifdef HYDRA_PLUGIN
+    void set_projection_matrix_perspective(mat4 proj);
+    void set_projection_matrix_ortho(mat4 proj);
+#endif
+
     projection_type get_projection_type() const;
     mat4 get_projection_matrix() const;
 

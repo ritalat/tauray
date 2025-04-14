@@ -23,7 +23,11 @@ struct placeholders;
 // targets! In any case, there really cannot be more frames than the number
 // of swap chain images going on at the same time, since their image views
 // would clash.
+#ifdef HYDRA_PLUGIN
+static constexpr int MAX_FRAMES_IN_FLIGHT = 1;
+#else
 static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+#endif
 
 class context
 {

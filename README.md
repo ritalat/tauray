@@ -1,3 +1,68 @@
+[WIP] Hydra render delegate
+==========================
+Only tested with usdview and Blender on Arch Linux, ymmv :)
+
+![Tauray running as a Hydra render delegate inside usdview.](docs/images/hydra_plugin.png)
+
+WIP limitations compared to the normal gltf path:
+  - Meshes with multiple materials must be split by material before exporting as GeomSubsets are unsupported (see the test scene box)
+  - UsdPreviewSurface only supports opacity, which Blender maps to alpha, you must set alpha to 1-transmission before exporting (see the test scene monkey)
+  - Spotlights are not implemented as USD doesn't have them directly, instead they should be created using the light shaping api
+  - Instancing is not implemented
+  - Animations are not implemented
+
+General todo:
+  - Support removing objects from the scene
+  - Implement envmaps as dome lights
+  - Fix USDZ texture loading
+  - Mixed primvar interpolation robustness
+  - Expose more settings to Hydra
+  - Expose depth buffer etc. to Hydra
+
+Out of scope:
+  - Subdivision surfaces, materialx, hair, etc. :^)
+
+Building
+--------
+Clone OpenUSD tag `v25.05.01` from `https://github.com/PixarAnimationStudios/OpenUSD`
+
+Build USD with:
+
+```
+python -m venv venv
+source venv/bin/activate
+pip install pyside6 pyopengl
+python build_scripts/build_usd.py --build-monolithic --no-materialx --onetbb --build-args oneTBB,"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" --generator Ninja <usd_build_dir>
+```
+
+Next configure Tauray with: `cmake -Bbuild -GNinja -DCMAKE_PREFIX_PATH=<usd_build_dir> -DHYDRA_PLUGIN=1` and build!
+
+Then run usdview with HdTauray enabled:
+
+```
+USD_DIR=<usd_build_dir>
+PATH=$USD_DIR/bin:$PATH PYTHONPATH=$USD_DIR/lib/python PXR_PLUGINPATH_NAME=$PWD $USD_DIR/bin/usdview test/test.usdc
+```
+
+You can configure Tauray with `-DHYDRA_PLUGIN_DEBUG_LOG=1` to enable verbose logging on the render delegate. This can help make sense of the control flow and lifetime of the plugin.
+
+Configuration
+-------------
+The render delegate currently exposes just a few settings to Hydra:
+  - accumulation = < true | false >
+  - samples = < target samples per pixel >
+  - sample batch = < samples per batch >
+  - ray depth = < maximum ray depth >
+
+Defaults can be set with environment variables `HDTAURAY_ACCUMULATE`, `HDTAURAY_SAMPLES`, `HDTAURAY_SAMPLEBATCH` and `HDTAURAY_RAYDEPTH`.
+
+Blender addon
+-------------
+To use the Blender addon you must compile HdTauray with the same version of USD that Blender uses. The addon has only been tested against the Arch packaged version with USD 25.08 so far. The official 4.5.0 binaries from blender.org come with USD 25.02(?) so you might want to try that on other distros if you can get it to build :)
+
+Original readme
+---------------
+
 Tauray
 =======
 

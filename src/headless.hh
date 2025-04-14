@@ -46,6 +46,9 @@ public:
         BMP,
         HDR,
         RAW,
+#ifdef HYDRA_PLUGIN
+        HYDRA,
+#endif
         EMPTY
     };
 
@@ -82,6 +85,15 @@ public:
     headless(const headless& other) = delete;
     headless(headless&& other) = delete;
     ~headless();
+
+#ifdef HYDRA_PLUGIN
+    void recreate_images(uvec2 size);
+    void* map_hydra_image();
+    void unmap_hydra_image();
+    bool hydra_image_mapped();
+    bool hydra_image_converged();
+    void set_accumulating(bool acc);
+#endif
 
 protected:
     uint32_t prepare_next_image(uint32_t frame_index) override;
@@ -123,6 +135,14 @@ private:
     };
 
     std::vector<per_image_data> per_image;
+
+#ifdef HYDRA_PLUGIN
+    std::vector<float> hydra_image;
+    std::mutex hydra_image_mutex;
+    bool hydra_mapping = false;
+    bool hydra_converged = false;
+    bool accumulating = false;
+#endif
 
     struct worker
     {

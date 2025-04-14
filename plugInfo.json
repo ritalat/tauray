@@ -1,0 +1,20 @@
+{
+    "Plugins": [
+        {
+            "Info": {
+                "Types": {
+                    "tr::HdTaurayRendererPlugin": {
+                        "bases": [
+                            "HdRendererPlugin"
+                        ],
+                        "displayName": "Tauray",
+                        "priority": 99
+                    }
+                }
+            },
+            "LibraryPath": "build/libhdtauray.so",
+            "Name": "HdTauray",
+            "Type": "library"
+        }
+    ]
+}

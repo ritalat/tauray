@@ -450,7 +450,11 @@ void texture::load_from_file(const std::string& path)
     }
     else
     {
+#ifdef HYDRA_PLUGIN
+        stbi_set_flip_vertically_on_load(true);
+#else
         stbi_set_flip_vertically_on_load(false);
+#endif
         bool hdr = stbi_is_hdr(path.c_str());
         int n = 0, w = 0, h = 0;
 

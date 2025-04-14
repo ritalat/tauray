@@ -4,6 +4,9 @@ project(Tauray LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(VULKAN_VALIDATION "Load Vulkan validation layers by default when present" OFF)
+option(HYDRA_PLUGIN "Build Tauray render delegate for USD Hydra" OFF)
+option(HYDRA_PLUGIN_DEBUG_LOG "Enable verbose logging for the render delegate" OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Threads)
 
@@ -67,7 +70,14 @@ find_package(libcbor QUIET)
 find_package(Vulkan REQUIRED)
 find_package(assimp REQUIRED)
 
-add_library(tauray-core STATIC
+if(HYDRA_PLUGIN)
+    find_package(OpenGL) # pxrTargets.cmake contains OpenGL::GL but the target was not found
+    find_package(X11) # HACK: Needed when building against Arch packaged USD
+    find_package(hdf5) # HACK: ditto
+    find_package(pxr REQUIRED)
+endif()
+
+add_library(tauray-core SHARED
   external/stb_image.c
   external/spirv_reflect.c
   external/tiny_gltf.cc
@@ -165,6 +175,19 @@ add_executable(tauray
   src/main.cc
 )
 
+if(HYDRA_PLUGIN)
+    add_library(hdtauray SHARED
+        src/hd_config.cc
+        src/hd_light.cc
+        src/hd_material.cc
+        src/hd_mesh.cc
+        src/hd_render_buffer.cc
+        src/hd_render_delegate.cc
+        src/hd_render_pass.cc
+        src/hd_renderer_plugin.cc
+    )
+endif()
+
 target_include_directories(tauray-core PUBLIC SYSTEM
     "external"
     "external/SPIRV-Headers/include"
@@ -173,10 +196,26 @@ target_include_directories(tauray-core PUBLIC SYSTEM
 target_link_libraries(tauray-core PUBLIC SDL2::SDL2 glm::glm glslang glslang-default-resource-limits SPIRV openxr_loader Vulkan::Vulkan vk-radix-sort assimp::assimp)
 target_link_libraries(tauray PUBLIC tauray-core SDL2::SDL2main)
 
+if(HYDRA_PLUGIN)
+    if(NOT TARGET usd_ms)
+        target_link_libraries(hdtauray PUBLIC tauray-core hd gf tf)
+    else()
+        target_link_libraries(hdtauray PUBLIC tauray-core usd_ms)
+    endif()
+    if(HYDRA_PLUGIN_DEBUG_LOG)
+        target_compile_definitions(hdtauray PUBLIC PROJECT_DEBUG=1)
+    endif()
+    target_compile_definitions(tauray-core PUBLIC HYDRA_PLUGIN=1)
+endif()
+
 if(MSVC)
   target_compile_options(tauray-core PRIVATE /W4 /WX- /MP)
 else()
   target_compile_options(tauray-core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+if(NOT MSVC)
+    target_compile_options(hdtauray PRIVATE -Wno-deprecated)
 endif()
 
 if(NOT czmq_FOUND)

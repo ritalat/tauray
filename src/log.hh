@@ -17,7 +17,7 @@
 #define __FILENAME__ ((const char*)((uintptr_t)__FILE__ + TAURAY_PROJECT_ROOT_PATH_SIZE))
 
 #ifdef PROJECT_DEBUG
-#define TR_DBG(...) tr::log_message(tr::log_type::DEBUG __LINE__, __FILENAME__, __VA_ARGS__)
+#define TR_DBG(...) tr::log_message(tr::log_type::DEBUG, __LINE__, __FILENAME__, __VA_ARGS__)
 #else
 #define TR_DBG(...)
 #endif
