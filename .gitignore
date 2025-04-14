@@ -22,3 +22,9 @@ external/SDL2-2.0.12/
 external/packagecache/
 x64/
 .vscode
+
+*.patch
+_*.sh
+*.usda
+*.png
+*.txt

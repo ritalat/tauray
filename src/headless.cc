@@ -80,13 +80,13 @@ headless::headless(const options& opt)
         throw std::runtime_error(
             "More than one display is only allowed in fully headless mode"
         );
-
+#if 0
     // Create the directory if it doesn't exist
     std::filesystem::path output_dir(opt.output_prefix);
     output_dir.remove_filename();
     if(!std::filesystem::exists(output_dir))
         std::filesystem::create_directories(output_dir);
-
+#endif
     if(opt.viewer) init_sdl();
     init_vulkan(vkGetInstanceProcAddr);
     init_devices();
